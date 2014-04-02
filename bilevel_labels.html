@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+circle,
+path {
+  cursor: pointer;
+}
+
+circle {
+  fill: none;
+  pointer-events: all;
+}
+
+</style>
+<body>
+<div id="chart"></div>
+<script src="d3.min.js"></script>
+<script>
+
+var width = 960,
+    height = 700,
+    padding = 5,
+    radius = Math.min(width, height) / 2;
+
+var x = d3.scale.linear()
+    .range([0, 2 * Math.PI]);
+
+var y = d3.scale.sqrt()
+    .range([0, radius]);
+
+var color = d3.scale.category20();
+
+
+var vis = d3.select("#chart").append("svg:svg")
+    .attr("width", width)
+    .attr("height", height)
+  .append("svg:g")
+    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+
+var partition = d3.layout.partition()
+    .value(function(d) { return 1 }); // d.Amount
+
+var arc = d3.svg.arc()
+    .startAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x))); })
+    .endAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x + d.dx))); })
+    .innerRadius(function(d) { return Math.max(0, y(d.y)); })
+    .outerRadius(function(d) { return Math.max(0, y(d.y + d.dy)); });
+
+function plot(json) {
+  var nodes = partition.nodes({children: json});
+  var path = vis.data([json]).selectAll("path")
+      .data(partition.nodes)
+    .enter().append("path")
+      .attr("d", arc)
+      .style("fill", function(d) { return color((d.children ? d : d.parent).Batch); })
+      .on("click", click);
+
+	  
+  var labels = vis.selectAll("text.label")
+      .data(partition.nodes)
+    .enter().append("text")
+      .attr("class", "label")
+      .style("fill", "black")
+      .attr("transform", function(d) { return "translate(" + arc.centroid(d) + ")"; })
+      .text(function(d, i) { return d.Batch;} );
+
+  vis.selectAll("path")
+   .append("title")
+     .text(function(d) { return d.Batch; });
+
+  function click(d) {
+	console.log("clicked");
+    path.transition()
+      .duration(750)
+      .attrTween("d", arcTween(d));
+  }
+ } 
+
+// Interpolate the scales!
+function arcTween(d) {
+  var xd = d3.interpolate(x.domain(), [d.x, d.x + d.dx]),
+      yd = d3.interpolate(y.domain(), [d.y, 1]),
+      yr = d3.interpolate(y.range(), [d.y ? 20 : 0, radius]);
+  return function(d, i) {
+    return i
+        ? function(t) { return arc(d); }
+        : function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); return arc(d); };
+  };
+}
+
+
+// Build JSON and start plotting:
+var batches = [
+
+{Batch: "5678R001", Amount: "100", MaterialNumber: "200200", MaterialDesc: "Hefe", BatchStatus: "frei", Parent: "1234R001", colour: "#e8e596", children: []},
+{Batch: "5678R002", Amount: "32", MaterialNumber: "300300", MaterialDesc: "Brot", BatchStatus: "frei", Parent: "1234R001", colour: "#e8e596", children: []},
+{Batch: "5678R003", Amount: "70", MaterialNumber: "400400", MaterialDesc: "Salz", BatchStatus: "frei", Parent: "1234R001", colour: "#e8e596", children: []},
+{Batch: "5678R004", Amount: "700", MaterialNumber: "500500", MaterialDesc: "Butter", BatchStatus: "frei", Parent: "1234R001", colour: "#e8e596", children: []},
+{Batch: "5678R005", Amount: "52", MaterialNumber: "600600", MaterialDesc: "Rosinen", BatchStatus: "frei", Parent: "1234R001", colour: "#e8e596", children: []},
+{Batch: "9012S001", Amount: "500", MaterialNumber: "700700", MaterialDesc: "Käse", BatchStatus: "gesperrt", Parent: "5678R001", colour: "#e8e596", children: []},
+{Batch: "9012S002", Amount: "100", MaterialNumber: "800800", MaterialDesc: "Milch", BatchStatus: "Q-Prüfung", Parent: "5678R001", colour: "#e8e596", children: []},
+{Batch: "9012S003", Amount: "32", MaterialNumber: "900900", MaterialDesc: "Eier", BatchStatus: "frei", Parent: "5678R001", colour: "#e8e596", children: []},
+{Batch: "9012S004", Amount: "70", MaterialNumber: "101101", MaterialDesc: "gelatine", BatchStatus: "gesperrt", Parent: "5678R002", colour: "#e8e596", children: []},
+{Batch: "9012S005", Amount: "700", MaterialNumber: "102102", MaterialDesc: "Backpulver", BatchStatus: "Q-Prüfung", Parent: "5678R002", colour: "#e8e596", children: []},
+{Batch: "9012S006", Amount: "52", MaterialNumber: "103103", MaterialDesc: "Quark", BatchStatus: "frei", Parent: "5678R002", colour: "#e8e596", children: []},
+{Batch: "9012S007", Amount: "500", MaterialNumber: "104104", MaterialDesc: "Mehl", BatchStatus: "gesperrt", Parent: "5678R003", colour: "#e8e596", children: []},
+{Batch: "9012S008", Amount: "100", MaterialNumber: "105105", MaterialDesc: "Mandeln", BatchStatus: "Q-Prüfung", Parent: "5678R003", colour: "#e8e596", children: []},
+{Batch: "9012S009", Amount: "32", MaterialNumber: "106106", MaterialDesc: "Nüsse", BatchStatus: "frei", Parent: "5678R003", colour: "#e8e596", children: []},
+{Batch: "9012S010", Amount: "70", MaterialNumber: "107107", MaterialDesc: "Eiweiss", BatchStatus: "gesperrt", Parent: "5678R003", colour: "#e8e596", children: []},
+{Batch: "9012S011", Amount: "700", MaterialNumber: "108108", MaterialDesc: "Eigelb", BatchStatus: "Q-Prüfung", Parent: "5678R005", colour: "#e8e596", children: []},
+{Batch: "9012S012", Amount: "52", MaterialNumber: "109109", MaterialDesc: "Zitronenabrieb", BatchStatus: "frei", Parent: "5678R005", colour: "#e8e596", children: []},
+{Batch: "9012S013", Amount: "500", MaterialNumber: "110110", MaterialDesc: "Zitronensaft", BatchStatus: "gesperrt", Parent: "9012S001", colour: "#e8e596", children: []},
+{Batch: "9012S014", Amount: "100", MaterialNumber: "111111", MaterialDesc: "Zimtstangen", BatchStatus: "Q-Prüfung", Parent: "9012S002", colour: "#e8e596", children: []},
+{Batch: "9012S015", Amount: "32", MaterialNumber: "112112", MaterialDesc: "Orangenschale", BatchStatus: "frei", Parent: "9012S002", colour: "#e8e596", children: []},
+{Batch: "9012S016", Amount: "70", MaterialNumber: "113113", MaterialDesc: "Walnüsse", BatchStatus: "gesperrt", Parent: "9012S002", colour: "#e8e596", children: []},
+{Batch: "9012S017", Amount: "700", MaterialNumber: "114114", MaterialDesc: "Brauner Rum", BatchStatus: "Q-Prüfung", Parent: "9012S002", colour: "#e8e596", children: []}
+]
+
+var root = {Batch: "1234R001", Amount: "500", MaterialNumber: "100100", MaterialDesc: "Kuchen", BatchStatus: "frei", Parent: null, colour: "#e8e596", children: []};
+var node_list = { "1234R001" : root};
+
+for (var i = 0; i < batches.length; i++) {
+    node_list[batches[i].Batch] = batches[i];
+    node_list[batches[i].Parent].children.push(node_list[batches[i].Batch]);
+}
+
+plot(root);
+
+</script>
+
