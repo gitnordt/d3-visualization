@@ -29,7 +29,7 @@ $.getJSON("AA-software.json", function(response) {
   "Categories":["Identify Management", "Software Analysis"]
 }*/
 
-var data = response;
+
 //************************************************************************test 0*********************************************************************
 
 /*
@@ -42,28 +42,7 @@ d3.select('body').append('br');
 d3.select('body').append('br');*/
  
 //************************************************************************test 1*********************************************************************
-// next = node.children[path[j]];
-// create the tree array
-/*var tree = [];
-data.forEach(function(node) {
-    // add to parent
-    var parent = dataMap[node.parent];
-    if (parent) {
-        // create child array if it doesn't exist
-        (parent.children || (parent.children = []))
-            // add node to child array
-            .push(node);
-    } else {
-        // parent is null or missing
-        tree.push(node);
-    }
-});*/
 
-/*d3.select('body').append('pre')
-    .text(JSON.stringify(tree, null, '  '));	
-	
-d3.select('body').append('br');
-d3.select('body').append('br');*/
 
 //************************************************************************test 2*********************************************************************
 
@@ -78,10 +57,26 @@ var nest = d3.nest()
     .key(function(d) { return d['Program Teams']; })
 	.key(function(d) { return d.Software; })
     .entries(response);
-
-
+	
+	
+	
+	/*{
+  "DARPA Program":"CFT",
+  "Program Teams":["Dr. Charlie Miller"],
+  "Software":"Risk and Vulnerability Assessment of Near Field Communication in Smartphones",
+  "Public Code Repo":"CFTdata@darpa.mil",
+  "Description":"Risk and Vulnerability Assessment of Near Field Communication (NFC) in Smartphones via an automated test framework.",
+  "License":"GPR",
+  "Categories":["Software"]
+}*/
+	
+//working
+var nest_string = JSON.stringify(nest, null, '  ');
+nest_string = nest_string.substring(1, nest_string.length - 2);
+nest_string = nest_string.replace(/"key"/g, '"name"');
+nest_string = nest_string.replace(/"values"/g, '"children"');
 d3.select('body').append('pre')
-	.text(JSON.stringify(nest, null, '  '));
+	.text(nest_string);
 
 d3.select('body').append('br');
 d3.select('body').append('br');
@@ -90,6 +85,7 @@ d3.select('body').append('br');
 //************************************************************************test 4*********************************************************************
 	
 // create a name: node map
+var data = response;
 var dataMap = data.reduce(function(map, node) {
     map[node['DARPA Program']] = node;
 	//console.log(map);
@@ -97,11 +93,30 @@ var dataMap = data.reduce(function(map, node) {
 }, {});
 
 
-d3.select('body').append('pre')
-	.text(dataMap);
+// next = node.children[path[j]];
+// create the tree array
+var tree = [];
+data.forEach(function(node) {
+    // add to parent
+    var parent = dataMap[node.parent];
+    if (parent) {
+        // create child array if it doesn't exist
+        (parent.children || (parent.children = []))
+            // add node to child array
+            .push(node);
+    } else {
+        // parent is null or missing
+        tree.push(node);
+    }
+});
 
+console.log(dataMap);
+d3.select('body').append('pre')
+    .text(JSON.stringify(tree, null, '  '));	
+	
 d3.select('body').append('br');
-d3.select('body').append('br');	
+d3.select('body').append('br');
+
 
 //************************************************************************test 5*********************************************************************
 var data_translate =JSON.stringify(data, null, '  ');
