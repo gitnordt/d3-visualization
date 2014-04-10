@@ -1,0 +1,145 @@
+ 
+<html>
+<link rel='stylesheet' href='../../templates/simple_sortable_table/style.css' type='text/css'/>
+<link rel='stylesheet' href='../../templates/simple_sortable_table/banner_style.css' type='text/css'/>
+<link rel='stylesheet' href='../../templates/simple_sortable_table/css/flick/jquery-ui-1.10.4.custom.css' type='text/css'/>
+<link rel='stylesheet' href='../../templates/searchable_table/css/list_style.css' type='text/css'/>
+
+<script type='text/javascript' src="../../templates/searchable_table/list.min.js"></script>
+<script type='text/javascript' src='../../templates/simple_sortable_table/jquery-latest.js'></script>
+<script type='text/javascript' src="../../templates/simple_sortable_table/jquery-1.9.1.js"></script>
+<script type='text/javascript' src="../../templates/simple_sortable_table/jquery-ui.js"></script>
+<script type='text/javascript' src='../../templates/simple_sortable_table/jquery.tablesorter.min.js'></script>
+<script type="text/javascript" src="templates.js"></script>
+<script type="text/javascript" src="mustache.js"></script>
+<script type="text/javascript" src="sunburst.js"></script>
+<script type="text/javascript" src='d3.min.js'></script>
+<style>
+.selected{
+ background-color:#FFFF00;
+}
+
+.getAutoHeight {
+  position: relative;
+  overflow: auto;
+}
+
+path {
+  stroke: #fff;
+  fill-rule: evenodd;
+}
+
+.sunburst-div{
+height: 90%;
+width:90%;
+margin: 0 auto;
+}
+
+body{
+height: 1200px;
+}
+
+p{
+padding-right: 10px;
+}
+</style>
+<script type='text/javascript'>
+$( document ).ready(function() {
+	function getProgramData(program_nm, type) {
+		var data;
+		$.ajax({
+			async: false,
+			url: '../../darpa_open_catalog/' + program_nm + '-' + type + '.json',
+			dataType: 'json',
+			success: function(response){
+			   data = response;
+			}
+		});
+		return data;
+	}
+
+
+	function sortByProperty(property) {
+		return function (a, b) {
+			var sortStatus = 0;
+			if (a[property] < b[property]) {
+				sortStatus = -1;
+			} else if (a[property] > b[property]) {
+				sortStatus = 1;
+			}
+	 
+			return sortStatus;
+		};
+	}
+
+	var active_programs = [];
+
+
+	var programs = [];
+	function getProgramView(){
+		programs = getPrograms();
+		var html = "<h1>DARPA Programs</h1><p>Total Number of Programs: " + programs.length + "</p>";
+		var template = templates.program;
+		
+		programs.sort(sortByProperty('Program Name'));
+		
+		$.each(programs, function (program) {
+			var program_nm = programs[program]['Program Name']
+			var program_data = getProgramData(program_nm, "program");
+			var links = [];
+			html += Mustache.to_html(template, program_data);
+			html += '<p id="program_templ_links">';
+			
+			if (programs[program]['Pubs File'] != "")
+				links.push('<a href="#">Publications</a>');
+			if (programs[program]['Software File'] != "")
+				links.push('<a href="#">Software</a>');
+				
+			if(links.length > 1){
+				$.each(links, function (link) {
+					html += links[link];
+					if(link < links.length - 1)
+						html += ' | '
+				});
+			}
+			else
+				html += links[0];
+			
+			html += '</p>';
+			
+		});
+			
+		$('#ontology_view').html(html);
+		//console.log($('#programs_item'));
+		$('#ontology_map').height($('#ontology_view').height());
+
+	}
+
+		
+	
+
+	getProgramView();
+	createSunburstGraph('#sunburst');
+	
+	$(window).scroll(function(){
+	  var top_margin = $(window).scrollTop() < 3400 ? $(window).scrollTop() : 3400;
+	  $("#sunburst").stop().animate({"marginTop": (top_margin) + "px", "marginLeft":"0px"}, "slow" );
+	});
+});
+</script>
+<div class='darpa-header'><a href='http://www.darpa.mil/'><img class='darpa-logo' src='../../templates/darpa_logos/darpa-transparent-v2.png'></a><h1><a href='index.html' class='programlink'><img class='catalog-logo' src='../../templates/darpa_logos/Open-Catalog-Single-Big.png'></a><span><font color='white'> / </font> <a href="http://www.darpa.mil/Our_Work/I2O/"' class='programlink programheader'>Data Visualization</a> </span></h1></div>
+
+<div id='ontology'>
+	<div id='ontology_map' style='width:59%; float:left; margin_left:5px; background:#E5E4E2; border: 2px solid #87AFC7; '>
+		<div class="sunburst-div" id="sunburst" style='width:98%; height:10%; padding:10px;'></div>
+	</div>
+	<div id='ontology_view' class="getAutoHeight" style='width:40.68%; float:left; background:#E6EEEE; border: 2px solid #87AFC7; border-left: 0px;'>
+	</div>
+</div>
+
+<div class='footer'>
+<hr>
+<p><a href='http://www.darpa.mil/FOIA.aspx'>FOIA</a> | <a href='http://www.darpa.mil/Privacy_Security_Notice.aspx'>Privacy and Security</a> | 
+<a href='http://www.darpa.mil/NoFearAct.aspx'>No Fear Act</a> | <a href='http://www.darpa.mil/External_Link.aspx?url=http://dodcio.defense.gov/DoDSection508/Std_Stmt.aspx'>Accessibility/Section 508</a></p>
+</div>
+</html>
