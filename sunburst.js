@@ -47,7 +47,6 @@ function isIE() {
 		return false;
 }
 
-
 function sortByProperty(property) {
     return function (a, b) {
         var sortStatus = 0;
@@ -60,6 +59,23 @@ function sortByProperty(property) {
         return sortStatus;
     };
 }
+
+
+function getScrollHeight(){
+	 // var height = 0;
+	  
+	  if($('#ontology_view').height() > $('#ontology_map').height()){
+		  /*if(isIE())
+			top_margin = $(window).scrollTop() < 3220 ? $(window).scrollTop() : 3220; //subtract 1007 from height 
+		  else
+			top_margin = $(window).scrollTop() < 4050 ? $(window).scrollTop() : 4050; //subtract 655.8 from height*/
+	  }
+	  else{
+		//return height;
+			console.log($(window).scrollTop();
+		}
+}
+
 
 function getDetailsNode(data, edges, node_name, size){
 	var _details_edge = new Array();
@@ -97,48 +113,12 @@ function getDetailsNode(data, edges, node_name, size){
 
 }
 
-function getProgramView(){
-	if(active_programs.length == 0 )
-		active_programs = getPrograms();
-	
-	var html = "<h1>DARPA Programs</h1><p>Total Number of Programs: " + active_programs.length + "</p>";
-	var template = templates.Program;
-	
-	active_programs.sort(sortByProperty('Program Name'));
-	
-	$.each(active_programs, function (program) {
-		var program_nm = active_programs[program]['Program Name']
-		var program_data = getProgramDetails(program_nm + "-program.json");
-		var links = [];
-		html += Mustache.to_html(template, program_data);
-		html += '<p id="program_templ_links">';
-		
-		if (active_programs[program]['Pubs File'] != "")
-			links.push('<a href="#">Publications</a>');
-		if (active_programs[program]['Software File'] != "")
-			links.push('<a href="#">Software</a>');
-			
-		if(links.length > 1){
-			$.each(links, function (link) {
-				html += links[link];
-				if(link < links.length - 1)
-					html += ' | '
-			});
-		}
-		else
-			html += links[0];
-		
-		html += '</p>';
-		
-	});
-
-	console.log(html);
-	return html;
-}
-
 function adjustOntologyView(query_array){
-	  
+
+	  query_array = typeof query_array == 'string' ? [query_array] : query_array;
+	  console.log(query_array);
 	  var html = "";
+	  var level_data = [];
 	  if(query_array.length == 0){
 		html = getProgramView();
       }
@@ -164,9 +144,7 @@ function adjustOntologyView(query_array){
 
 			html += '</p>';		
 	  }
-
 	  else if(query_array.length > 1){
-		//console.log(query_array[0] + "-" + query_array[1]);
 		var file_type = "";
 		if(query_array[1] == "Software")
 			file_type = "software";
@@ -176,75 +154,161 @@ function adjustOntologyView(query_array){
 		var program_data = getProgramDetails(query_array[0] + "-" + file_type + ".json");
 		var template = "";
 
-		if(query_array[1] == "Software")
+		if(query_array[1] == "Software"){
 			template = templates.Software;
-		else
+			program_data.sort(sortByProperty("Software"));
+		}
+		else if(query_array[1] == "Publications"){
 			template = templates.Publications;
-		
-		if (query_array.length == 2){
-			if(query_array[1] == "Software")
-				program_data.sort(sortByProperty("Software"));
-			else
-				program_data.sort(sortByProperty("Title"));
+			program_data.sort(sortByProperty("Title"));
 		}
-		else{
-			program_data.sort(sortByProperty(query_array[2]));
+
+		if(query_array.length == 3){
+			for (data in program_data) {
+				var child_query = getChildQueryArray(query_array[2], program_data[data]);
+				for( child in child_query){
+					if(!isInArray(child_query[child], level_data))
+						level_data.push(child_query[child]);
+					break;
+				}
+			}
+			level_data.sort();
 		}
-		
+
+
 		if(query_array.length == 4){
-			var drill_down = "";
+			var lowest_value = "";
 			if(query_array[2] == "Categories")
-				drill_down = "Category";
+				lowest_value = "Category";
 			else if(query_array[2] == "Teams")
-				drill_down = "Team";
-			else(query_array[2] == "Licenses")
-				drill_down = "License";
+				lowest_value = "Team";
+			else
+				lowest_value = "License";
 		}
 
 		if (query_array.length == 2)
-			html = '<h1>' + query_array[0] + " " + query_array[1] + ':</h1><p>Total Number of ' + query_array[1] + ' : ' + program_data.length + '</p>';
+			html = '<h1>' + query_array[0] + " " + query_array[1] + ':</h1><p>Total Records: ' + program_data.length + '</p>';
 		if (query_array.length == 3)
-			html = '<h1>' + query_array[0] + " " + query_array[1] + ' ordered by '+ query_array[2] +':</h1><p>Total Number of ' + query_array[1] + ' : ' + program_data.length + '</p>';
+			html = '<h1>' + query_array[0] + " " + query_array[1] + ' ordered by '+ query_array[2] +':</h1><p>Total Records: ' + program_data.length + '</p>';
 		if (query_array.length == 4)
-			html = '<h1>' + query_array[0] + " " + query_array[1] + ' ' + drill_down + ': ' + query_array[3] + ':</h1>';			
-			
-		for (data in program_data) {	
-			if (program_data[data]["Software"] == "")
-				program_data[data]["Software"] = "No Name Available";
-			if(program_data[data]["Title"] == "")
-				program_data[data]["Title"] = "No Name Available";
-				
-			if(query_array.length == 4){
-				var child_query = [];
-				if(query_array[2] == "Categories")
-					child_query = program_data[data].Categories;
-				else if(query_array[2] == "Teams")
-					child_query = program_data[data]["Program Teams"];
-				else(query_array[2] == "Licenses")
-					child_query = program_data[data].License;
+			html = '<h1>' + query_array[0] + " " + query_array[1] + ' with ' + lowest_value + ' \"' + query_array[3] + '\":</h1>';			
+
+
+
+		if(query_array.length == 3){
+			 for (var i=0;i < level_data.length;i++){ //all category array
+				var heading = level_data[i] != "" ? level_data[i] : "Undefined " + query_array[2];
+				html +="<h2><u>" + heading + "</u></h2>";
+				for (data in program_data) {
+					var child_query = getChildQueryArray(query_array[2], program_data[data]);
 					
-				for( child in child_query){
-					console.log(child_query[child], query_array[3]);
-					if(child_query[child] == query_array[3]){
-						html += Mustache.to_html(template, program_data[data]);
-						break;
-					}
+					for( child in child_query){ //value category array
+						if(child_query[child] == level_data[i]){
+							html += Mustache.to_html(template, program_data[data]);
+							break;
+						}
+					}	
 				}
 			}
-			else
-				html += Mustache.to_html(template, program_data[data]);
-		}	
-		
+
+		}
+		else{	
+			var match_html = "";
+			var match_count = 0;
+			for (data in program_data) {	
+				if (program_data[data]["Software"] == "")
+					program_data[data]["Software"] = "No Name Available";
+				if(program_data[data]["Title"] == "")
+					program_data[data]["Title"] = "No Name Available";
+
+				if(query_array.length == 4){
+
+					var child_query = getChildQueryArray(query_array[2], program_data[data]);
+					for( child in child_query){
+						if(child_query[child] == query_array[3]){
+							console.log("match");
+							match_count ++;
+							match_html += Mustache.to_html(template, program_data[data]);
+							break;
+						}
+					}
+					if(data == program_data.length -1){
+						html += "<p>Total Records: " + match_count + "</p>" + match_html;
+					}
+				}
+				else
+					html += Mustache.to_html(template, program_data[data]);
+			}	
+		}
 	  }
-	  
-	  /*else if(query_array.length == 4){
-	  
-	  }*/
-	  
+
 	$('#ontology_view').html(html);
 	//if($('#ontology_map').height > $('#ontology_view').height())
 		$('#ontology_map').height($('#ontology_view').height());
 }
+
+function getProgramView(){
+	if(active_programs.length == 0 )
+		active_programs = getPrograms();
+	
+	var html = "<h1>DARPA Programs</h1><p>Total Number of Programs: " + active_programs.length + "</p>";
+	var template = templates.Program;
+	
+	active_programs.sort(sortByProperty('Program Name'));
+	
+	$.each(active_programs, function (program) {
+		var program_nm = active_programs[program]['Program Name']
+		var program_data = getProgramDetails(program_nm + "-program.json");
+		var links = [];
+		var file_type = "";
+		html += Mustache.to_html(template, program_data);
+		html += '<p id="program_templ_links">';
+
+		
+		if (active_programs[program]['Pubs File'] != "")
+			file_type = "Publications";
+		if (active_programs[program]['Software File'] != "")
+			file_type = "Software";
+
+		if (active_programs[program]['Pubs File'] != "")
+			links.push('Publications');
+		if (active_programs[program]['Software File'] != "")
+			links.push('Software');	
+	
+		if(links.length > 1){
+			$.each(links, function (link) {
+				html += links[link];
+				if(link < links.length - 1)
+					html += ' | '
+			});
+		}
+		else
+			html += links[0];
+		
+		html += '</p>';
+		
+	});
+	
+
+	//console.log(html);
+	return html;
+}
+
+
+function getChildQueryArray(query, data){
+	var child_query = [];
+	if(query == "Categories")
+		child_query = data.Categories;
+	else if(query == "Teams")
+		child_query = data["Program Teams"];
+	else if(query == "License")
+		child_query = data.License;
+		
+	return child_query;
+
+}
+
+
 
 
 function getSunburstJSON(){
@@ -356,11 +420,7 @@ function createSunburstGraph(div){
 	  .attr("dx", function(d) { var horizontal = ""; d.depth == 0 ? horizontal = "-50" : horizontal = "12"; return horizontal; })
 	  .attr("dy", ".35em") // vertical-align
 	  .attr("font-size", "80%")
-	  .attr("title", function(d) { var title = ""; d.depth == 0 ? title = "zoom out" : title = d.name + " - zoom in"; return title; })
-	  .on("click", click)
 	  .text(function(d) { return d.name; });
-	  
-
 
 	function computeTextRotation(d) {
 	  var angle = x(d.x + d.dx / 2) - Math.PI / 2;
@@ -395,7 +455,6 @@ function createSunburstGraph(div){
 		 d_parent = d_parent.parent;
 	   }		
 		adjustOntologyView(parent_array);
-		
 	}
 	
 	// Interpolate the scales!

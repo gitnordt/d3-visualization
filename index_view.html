@@ -38,6 +38,10 @@ p{
 padding-right: 10px;
 }
 
+h1, h2{
+ max-width: 100%;
+}
+
 </style>
 <script type='text/javascript'>
 $( document ).ready(function() {
@@ -45,6 +49,11 @@ $( document ).ready(function() {
 	var ontology_html = getProgramView();
 	
 	$('#ontology_view').html(ontology_html);
+	console.log("ontology map on left" + $('#ontology_map').height());
+	console.log("ontology view on right" + $('#ontology_view').height()); //4705.8 
+	
+	alert("ontology map on left" + $('#ontology_map').height());
+	alert("ontology view on right" + $('#ontology_view').height());	//4227
 	//if($('#ontology_map').height > $('#ontology_view').height())
 		$('#ontology_map').height($('#ontology_view').height());
 	
@@ -53,9 +62,9 @@ $( document ).ready(function() {
 	$(window).scroll(function(){
 	  var top_margin = '';
 	  if(isIE())
-		top_margin = $(window).scrollTop() < 3220 ? $(window).scrollTop() : 3220;
+		top_margin = $(window).scrollTop() < 3220 ? $(window).scrollTop() : 3220; //subtract 1007
 	  else
-		top_margin = $(window).scrollTop() < 4050 ? $(window).scrollTop() : 4050;
+		top_margin = $(window).scrollTop() < 4050 ? $(window).scrollTop() : 4050; //subtract 655.8
 	  $("#sunburst").stop().animate({"marginTop": (top_margin) + "px", "marginLeft":"0px"}, "slow" );
 	});
 });
