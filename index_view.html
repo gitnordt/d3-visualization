@@ -31,7 +31,8 @@ margin: 0 auto;
 }
 
 body{
-height: 1200px;
+height: 1100px;
+overflow:auto;
 }
 
 p{
@@ -42,6 +43,11 @@ h1, h2{
  max-width: 100%;
 }
 
+ontology_view{
+display:inline-block;
+overflow:hidden;
+}
+
 </style>
 <script type='text/javascript'>
 $( document ).ready(function() {
@@ -49,33 +55,30 @@ $( document ).ready(function() {
 	var ontology_html = getProgramView();
 	
 	$('#ontology_view').html(ontology_html);
-	console.log("ontology map on left" + $('#ontology_map').height());
-	console.log("ontology view on right" + $('#ontology_view').height()); //4705.8 
-	
-	alert("ontology map on left" + $('#ontology_map').height());
-	alert("ontology view on right" + $('#ontology_view').height());	//4227
-	//if($('#ontology_map').height > $('#ontology_view').height())
-		$('#ontology_map').height($('#ontology_view').height());
+	adjustHeight();
 	
 	createSunburstGraph('#sunburst');
-	
+	console.log($(window));
 	$(window).scroll(function(){
+	  
 	  var top_margin = '';
 	  if(isIE())
-		top_margin = $(window).scrollTop() < 3220 ? $(window).scrollTop() : 3220; //subtract 1007
+		top_margin = $(window).scrollTop() < getScrollHeight() ? $(window).scrollTop() : getScrollHeight(); //subtract 1007
 	  else
-		top_margin = $(window).scrollTop() < 4050 ? $(window).scrollTop() : 4050; //subtract 655.8
-	  $("#sunburst").stop().animate({"marginTop": (top_margin) + "px", "marginLeft":"0px"}, "slow" );
+		top_margin = $(window).scrollTop() < getScrollHeight() ? $(window).scrollTop() : getScrollHeight(); //subtract 655.8
+		
+	  console.log("scroll: " + top_margin);	
+	  $("#sunburst").stop().animate({"margin-top": (top_margin) + "px", "margin-left":"0px"}, "slow" );
 	});
 });
 </script>
 <div class='darpa-header'><a href='http://www.darpa.mil/'><img class='darpa-logo' src='../../templates/darpa_logos/darpa-transparent-v2.png'></a><h1><a href='index.html' class='programlink'><img class='catalog-logo' src='../../templates/darpa_logos/Open-Catalog-Single-Big.png'></a><span><font color='white'> / </font> <a href="http://www.darpa.mil/Our_Work/I2O/"' class='programlink programheader'>Data Visualization</a> </span></h1></div>
 
 <div id='ontology'>
-	<div id='ontology_map' style='width:59%; float:left; margin_left:5px; background:#E5E4E2; border: 2px solid #87AFC7; '>
-		<div class="sunburst-div" id="sunburst" style='width:98%; height:10%;'></div>
+	<div id='ontology_map' style='width:59%; float:left; margin_left:5px; background:#E5E4E2; border: 2px solid #87AFC7; min-height:1100px;'>
+		<div class="sunburst-div" id="sunburst" style='width:98%; height:100px;'></div>
 	</div>
-	<div id='ontology_view' style='width:40.68%; float:left; background:#E6EEEE; border: 2px solid #87AFC7; border-left: 0px; min-height:800px;'>
+	<div id='ontology_view' style='width:40.68%; float:left; background:#E6EEEE; border: 2px solid #87AFC7; border-left: 0px; min-height:1100px;'>
 	</div>
 </div>
 

@@ -60,20 +60,65 @@ function sortByProperty(property) {
     };
 }
 
+function adjustHeight(){
+
+
+	window.scrollTo(0,0);
+	//$(window).scrollTop(0);
+
+	$("#sunburst").stop().animate({"margin-top":"0px", "margin-left":"0px"}, "slow" );
+	//alert(JSON.stringify($("#sunburst"), null, 4));
+	//alert($("#sunburst").css('margin-top'));
+	$(window).scrollTop(0);
+	$("#sunburst").css( {"margin-top":"0px", "margin-left":"0px"} );
+	//alert($("#sunburst").css('margin-top'));
+	//alert("scroll top: " + $("#sunburst").scrollTop());
+	
+	$("#ontology_map").height($("#ontology_view").height());
+
+	$(document).resize(function() {
+		//alert("doc size: " + $(document).height());//changes - needs to be adjusted
+		//alert("win size: " + $(window).height()); //doesn't change
+		//alert("doc body scroll: " + document.body.scrollTop); //set to 0
+		//var height = window_height + 300;
+		//$(document).height(height);
+		//$(document).height = height;
+		//$(document).css('height', '100');
+		//alert("doc client height: " + document.documentElement.clientHeight); //=$(window).height()
+		//alert("map scroll height: " + $("#ontology_map")[0].scrollHeight); //adjusted by function, correct scrolling
+		//alert("client height for doc body: " + document.body.clientHeight); //=$(window).height()
+		//alert("offset height for doc body: " + document.body.offsetHeight); //= $("#ontology_map")[0].scrollHeight, set to 1100 and does not change
+		//alert("scroll height for doc body: " + document.body.scrollHeight); //=$(document).height() needs to be adjusted
+
+		 //   var objDiv = $("#ontology_map");
+		//var iScrollHeight = objDiv.prop("scrollHeight");
+		//alert("map scroll height: " + objDiv.prop("scrollHeight")); //=$("#ontology_map")[0].scrollHeight
+		//objDiv.prop("scrollTop", 120); 
+		//$("#ontology_map").empty().append(objDiv.innerHTML);
+		
+	});
+	
+	
+	//$(document).trigger('resize');
+	//alert("height after: " + $(document).height());
+
+}
 
 function getScrollHeight(){
-	 // var height = 0;
-	  
-	  if($('#ontology_view').height() > $('#ontology_map').height()){
-		  /*if(isIE())
-			top_margin = $(window).scrollTop() < 3220 ? $(window).scrollTop() : 3220; //subtract 1007 from height 
-		  else
-			top_margin = $(window).scrollTop() < 4050 ? $(window).scrollTop() : 4050; //subtract 655.8 from height*/
-	  }
-	  else{
-		//return height;
-			console.log($(window).scrollTop();
-		}
+	var map_height = $('#ontology_map').height();
+
+	if(isIE()){
+		if(map_height > 1007)
+			return map_height - 1007;
+		else
+			return 100;
+	}
+	else{
+		if(map_height > 1100)
+			return map_height - 656;
+		else
+			return 100;
+	}
 }
 
 
@@ -128,9 +173,11 @@ function adjustOntologyView(query_array){
 			html = Mustache.to_html(templates.Program, program_data);
 			html += '<p id="program_templ_links">';
 			if (active_programs[program]['Pubs File'] != "")
-				links.push('<a href="#">Publications</a>');
+				//links.push('<a href="#">Publications</a>');
+				links.push('Publications');
 			if (active_programs[program]['Software File'] != "")
-				links.push('<a href="#">Software</a>');
+				//links.push('<a href="#">Software</a>');
+				links.push('Software');
 	
 			if(links.length > 1){
 				$.each(links, function (link) {
@@ -191,18 +238,18 @@ function adjustOntologyView(query_array){
 		if (query_array.length == 3)
 			html = '<h1>' + query_array[0] + " " + query_array[1] + ' ordered by '+ query_array[2] +':</h1><p>Total Records: ' + program_data.length + '</p>';
 		if (query_array.length == 4)
-			html = '<h1>' + query_array[0] + " " + query_array[1] + ' with ' + lowest_value + ' \"' + query_array[3] + '\":</h1>';			
+			html = '<h1>' + query_array[0] + " " + query_array[1] + ' - ' + lowest_value + ' \"' + query_array[3] + '\":</h1>';			
 
 
 
 		if(query_array.length == 3){
-			 for (var i=0;i < level_data.length;i++){ //all category array
+			 for (var i=0;i < level_data.length;i++){
 				var heading = level_data[i] != "" ? level_data[i] : "Undefined " + query_array[2];
 				html +="<h2><u>" + heading + "</u></h2>";
 				for (data in program_data) {
 					var child_query = getChildQueryArray(query_array[2], program_data[data]);
 					
-					for( child in child_query){ //value category array
+					for( child in child_query){
 						if(child_query[child] == level_data[i]){
 							html += Mustache.to_html(template, program_data[data]);
 							break;
@@ -243,8 +290,7 @@ function adjustOntologyView(query_array){
 	  }
 
 	$('#ontology_view').html(html);
-	//if($('#ontology_map').height > $('#ontology_view').height())
-		$('#ontology_map').height($('#ontology_view').height());
+	adjustHeight();
 }
 
 function getProgramView(){
@@ -265,16 +311,15 @@ function getProgramView(){
 		html += '<p id="program_templ_links">';
 
 		
-		if (active_programs[program]['Pubs File'] != "")
+		if (active_programs[program]['Pubs File'] != ""){
 			file_type = "Publications";
-		if (active_programs[program]['Software File'] != "")
+			links.push(file_type);
+		}
+		if (active_programs[program]['Software File'] != ""){
 			file_type = "Software";
-
-		if (active_programs[program]['Pubs File'] != "")
-			links.push('Publications');
-		if (active_programs[program]['Software File'] != "")
-			links.push('Software');	
-	
+			links.push(file_type);	
+		}
+		
 		if(links.length > 1){
 			$.each(links, function (link) {
 				html += links[link];
@@ -288,9 +333,6 @@ function getProgramView(){
 		html += '</p>';
 		
 	});
-	
-
-	//console.log(html);
 	return html;
 }
 
@@ -305,11 +347,7 @@ function getChildQueryArray(query, data){
 		child_query = data.License;
 		
 	return child_query;
-
 }
-
-
-
 
 function getSunburstJSON(){
 	var _root = new Array();
@@ -379,17 +417,17 @@ function createSunburstGraph(div){
 	var svg = d3.select(div).append("svg")
 		.attr("width", margin.left + margin.right)
 		.attr("height", margin.top + margin.bottom)
-	  .append("g")	
-		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+	  .append("g")
+		  .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
 	var partition = d3.layout.partition()
 		.value(function(d) { return d.size; });
 
 	var arc = d3.svg.arc()
-		.startAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x))); })
-		.endAngle(function(d) { return Math.max(0, Math.min(2 * Math.PI, x(d.x + d.dx))); })
-		.innerRadius(function(d) { return Math.max(0, y(d.y)); })
-		.outerRadius(function(d) { return Math.max(0, y(d.y + d.dy)); });
+		.startAngle(function(d) { var start = Math.max(0, Math.min(2 * Math.PI, x(d.x))); d.depth == 0 ?  start = Math.max(0, Math.min(2 * Math.PI, (x(d.x) - 100))) : start; return start; })
+		.endAngle(function(d) { var end = Math.max(0, Math.min(2 * Math.PI, x(d.x + d.dx))); return end; })
+		.innerRadius(function(d) { var inner = Math.max(0, y(d.y)); return inner;})
+		.outerRadius(function(d) { var outer = Math.max(0, y(d.y + d.dy)); return outer; });
 	
 	var root = getSunburstJSON();
 	
@@ -409,25 +447,42 @@ function createSunburstGraph(div){
 		
 	var path = g.append("path")
 	  .attr("d", arc)
+	  .attr("cursor", "pointer")
 	  .style("fill", function(d) { return color(( d.children ? d : d.parent).name); })
 	  .attr("title", function(d) { var title = ""; d.depth == 0 ? title = "zoom out" : title = d.name; return title; })
       .on("mousemove", function(d){if(isIE()){  var text = ""; d.depth == 0 ? text = " zoom out " : text = " " + d.name; return tooltip.text(text).style("top", window.event.y-10 +"px").style("left",window.event.x+10+"px").style("text-align", "center").style("visibility", "visible");}})
 	  .on("mouseout", function(){if(isIE()) return tooltip.style("visibility", "hidden");})
 	  .on("click", click);
 	  
-	var text = g.append("text")
-	  .attr("x", function(d) { return y(d.y); })
-	  .attr("dx", function(d) { var horizontal = ""; d.depth == 0 ? horizontal = "-50" : horizontal = "12"; return horizontal; })
-	  .attr("dy", ".35em") // vertical-align
-	  .attr("font-size", "80%")
-	  .text(function(d) { return d.name; });
-
-	function computeTextRotation(d) {
+	function computeTextRotation(d) { 
 	  var angle = x(d.x + d.dx / 2) - Math.PI / 2;
-	  return angle / Math.PI * 180;
-	}
+	  var rotate = angle / Math.PI * 180;
+	  
+	 if( x(d.x + d.dx / 2) > Math.PI)
+		rotate = rotate + 180;
 
-	text.attr("transform", function(d) { var rotate = ""; d.depth == 0 ? rotate = "rotate(0)" : rotate = "rotate(" + computeTextRotation(d) + ")"; return rotate; });	
+	  return rotate;
+	}
+	
+	function computeAbsolutePlacement(d) { 
+	  var absolute = y(d.y);
+	  
+	 if( x(d.x + d.dx / 2) > Math.PI)
+	   absolute = -(y(d.y));
+	  
+
+	  return absolute;
+	}	
+	  
+	var text = g.append("text")
+	  .attr("transform", function(d) { var rotate = ""; d.depth == 0 ? rotate = "rotate(0)" : rotate = "rotate(" + computeTextRotation(d) + ")"; return rotate; })
+	  .attr("x", function(d) { return computeAbsolutePlacement(d) ; })
+	  .attr("dx", function(d) {var horizontal = ""; d.depth == 0 ? horizontal = "50" :  horizontal = "0"; return horizontal; })
+	  .attr("dy", ".35em") // vertical-align
+      .attr("text-anchor", function(d) { return x(d.x + d.dx / 2) < Math.PI ? "start" : "end"; })
+	  .attr("font-size", "70%")
+	  .attr("pointer-events", "none")
+	  .text(function(d) { return d.name; });
 
 	function click(d) {
 	  // fade out all text elements
@@ -444,7 +499,8 @@ function createSunburstGraph(div){
 			  arcText.transition().duration(750)
 				.attr("opacity", 1)
 				.attr("transform", function() { var rotate = ""; e.depth == 0 ? rotate = "rotate(0)" : rotate = "rotate(" + computeTextRotation(e) + ")"; return rotate; })
-				.attr("x", function(d) { return y(d.y); });
+				.attr("x", function(d) { return computeAbsolutePlacement(d) ; })
+				.attr("text-anchor", function(d) { return x(d.x + d.dx / 2) < Math.PI? "start" : "end"; })
 			}
 		});
 
