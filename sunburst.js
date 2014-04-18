@@ -115,7 +115,7 @@ function getScrollHeight(){
 	}
 	else{
 		if(map_height > 1100)
-			return map_height - 656;
+			return map_height - 620;
 		else
 			return 100;
 	}
@@ -158,38 +158,47 @@ function getDetailsNode(data, edges, node_name, size){
 
 }
 
+function getProgramLinks(program){
+	var links = [];
+	var link_html = "";
+	
+	link_html += '<p id="program_templ_links">';
+	if (program['Pubs File'] != "")
+		//links.push('<a href="#">Publications</a>');
+		links.push('Publications');
+	if (program['Software File'] != "")
+		//links.push('<a href="#">Software</a>');
+		links.push('Software');
+
+	if(links.length > 1){
+		$.each(links, function (link) {
+			link_html += links[link];
+			if(link < links.length - 1)
+				link_html += ' | '
+		});
+	}
+	else
+		link_html += links[0];
+
+	link_html += '</p>';	
+	
+	return link_html;
+}
+
 function adjustOntologyView(query_array){
 
 	  query_array = typeof query_array == 'string' ? [query_array] : query_array;
-	  console.log(query_array);
+	  //console.log(query_array);
 	  var html = "";
 	  var level_data = [];
 	  if(query_array.length == 0){
 		html = getProgramView();
       }
 	  else if(query_array.length == 1){
-			var program_data = getProgramDetails(query_array[0] + "-program.json");
-			var links = [];
-			html = Mustache.to_html(templates.Program, program_data);
-			html += '<p id="program_templ_links">';
-			if (active_programs[program]['Pubs File'] != "")
-				//links.push('<a href="#">Publications</a>');
-				links.push('Publications');
-			if (active_programs[program]['Software File'] != "")
-				//links.push('<a href="#">Software</a>');
-				links.push('Software');
-	
-			if(links.length > 1){
-				$.each(links, function (link) {
-					html += links[link];
-					if(link < links.length - 1)
-						html += ' | '
-				});
-			}
-			else
-				html += links[0];
-
-			html += '</p>';		
+		var program_data = getProgramDetails(query_array[0] + "-program.json");
+		
+		html = Mustache.to_html(templates.Program, program_data);
+		html += getProgramLinks(active_programs[program]);	
 	  }
 	  else if(query_array.length > 1){
 		var file_type = "";
@@ -305,32 +314,8 @@ function getProgramView(){
 	$.each(active_programs, function (program) {
 		var program_nm = active_programs[program]['Program Name']
 		var program_data = getProgramDetails(program_nm + "-program.json");
-		var links = [];
-		var file_type = "";
 		html += Mustache.to_html(template, program_data);
-		html += '<p id="program_templ_links">';
-
-		
-		if (active_programs[program]['Pubs File'] != ""){
-			file_type = "Publications";
-			links.push(file_type);
-		}
-		if (active_programs[program]['Software File'] != ""){
-			file_type = "Software";
-			links.push(file_type);	
-		}
-		
-		if(links.length > 1){
-			$.each(links, function (link) {
-				html += links[link];
-				if(link < links.length - 1)
-					html += ' | '
-			});
-		}
-		else
-			html += links[0];
-		
-		html += '</p>';
+		html += getProgramLinks(active_programs[program]);
 		
 	});
 	return html;
@@ -402,7 +387,7 @@ function createSunburstGraph(div){
 	if(isIE())
 		margin = {top: 480, right: 500, bottom: 300, left: 520};
 	else
-		margin = {top: 320, right: 550, bottom: 350, left: 427};
+		margin = {top: 360, right: 540, bottom: 280, left: 460};
 	
 	var radius = Math.min(margin.top, margin.right, margin.bottom, margin.left);
 
@@ -472,15 +457,42 @@ function createSunburstGraph(div){
 	  
 
 	  return absolute;
+	}
+
+	function computeAnchor(d, text) { 
+	 if( x(d.x + d.dx / 2) < Math.PI)
+	   return "start";
+	 else
+	  return "end";
+	}
+
+	function computeTransition(d, text) { 
+	  if(d.depth > 0){
+		 if( x(d.x + d.dx / 2) == Math.PI){
+			 if(text.attributes["text-anchor"] == "end")
+			  return "start";
+		 }
+		 else if(x(d.x + d.dx / 2) > Math.PI){
+			if(text.attributes["text-anchor"] != "end")
+				return "end";	
+		 }
+	  }
+	  else{
+	  	 if( x(d.x + d.dx / 2) < Math.PI)
+		   return "start";
+		 else
+		  return "end";
+	  }
+	  
 	}	
 	  
 	var text = g.append("text")
 	  .attr("transform", function(d) { var rotate = ""; d.depth == 0 ? rotate = "rotate(0)" : rotate = "rotate(" + computeTextRotation(d) + ")"; return rotate; })
-	  .attr("x", function(d) { return computeAbsolutePlacement(d) ; })
-	  .attr("dx", function(d) {var horizontal = ""; d.depth == 0 ? horizontal = "50" :  horizontal = "0"; return horizontal; })
+	  .attr("x", function(d) { return computeAbsolutePlacement(d); })
+	  .attr("dx", function(d) {var horizontal = ""; d.depth == 0 ? horizontal = "55" :  horizontal = "0"; return horizontal; })
 	  .attr("dy", ".35em") // vertical-align
-      .attr("text-anchor", function(d) { return x(d.x + d.dx / 2) < Math.PI ? "start" : "end"; })
-	  .attr("font-size", "70%")
+      .attr("text-anchor", function(d) {return computeAnchor(d, this); })
+	  .attr("font-size", isIE() ? "90%" : "75%")
 	  .attr("pointer-events", "none")
 	  .text(function(d) { return d.name; });
 
@@ -500,7 +512,7 @@ function createSunburstGraph(div){
 				.attr("opacity", 1)
 				.attr("transform", function() { var rotate = ""; e.depth == 0 ? rotate = "rotate(0)" : rotate = "rotate(" + computeTextRotation(e) + ")"; return rotate; })
 				.attr("x", function(d) { return computeAbsolutePlacement(d) ; })
-				.attr("text-anchor", function(d) { return x(d.x + d.dx / 2) < Math.PI? "start" : "end"; })
+				.attr("text-anchor", function(d) {return computeTransition(d, this); })
 			}
 		});
 

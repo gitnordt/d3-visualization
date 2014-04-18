@@ -51,23 +51,19 @@ overflow:hidden;
 </style>
 <script type='text/javascript'>
 $( document ).ready(function() {
-
 	var ontology_html = getProgramView();
 	
 	$('#ontology_view').html(ontology_html);
 	adjustHeight();
 	
 	createSunburstGraph('#sunburst');
-	console.log($(window));
 	$(window).scroll(function(){
-	  
 	  var top_margin = '';
 	  if(isIE())
-		top_margin = $(window).scrollTop() < getScrollHeight() ? $(window).scrollTop() : getScrollHeight(); //subtract 1007
+		top_margin = $(window).scrollTop() < getScrollHeight() ? $(window).scrollTop() : getScrollHeight();
 	  else
-		top_margin = $(window).scrollTop() < getScrollHeight() ? $(window).scrollTop() : getScrollHeight(); //subtract 655.8
-		
-	  console.log("scroll: " + top_margin);	
+		top_margin = $(window).scrollTop() < getScrollHeight() ? $(window).scrollTop() : getScrollHeight();
+
 	  $("#sunburst").stop().animate({"margin-top": (top_margin) + "px", "margin-left":"0px"}, "slow" );
 	});
 });
